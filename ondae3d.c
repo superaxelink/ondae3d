@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 /** pi  = dphi/dt*/
-/** psi = dphi/dx*/
+/** psi = dphi/dr*/
 /**compilar con "gcc -o archivo archivo.c -lm"*/
 int main()
 {   
@@ -15,7 +15,7 @@ int main()
     scanf("%d",&nx);
     /**nx=30*/
     /**Matrices que daran informacion de las ecuaciones diferenciales*/
-    float R[nx],PI[nx], PHI[nx],PSI[nx],DPSI[nx],DPI[nx],SPSI[nx],SPI[nx],SPHI[nx],OPHI[nx],OPI[nx],OPSI[nx];
+    float X[nx],PI[nx], PHI[nx],PSI[nx],DPSI[nx],DPI[nx],SPSI[nx],SPI[nx],SPHI[nx],OPHI[nx],OPI[nx],OPSI[nx];
 
     float PI_K1[nx], PHI_K1[nx],PSI_K1[nx];
 
@@ -38,14 +38,14 @@ int main()
     t=0;
 /**Fijamos valores iniciales*/
     for(z=0;z<nx;z++){
-        R[z]=(z+0.5)*dx;
+        X[z]=(z+0.5)*dx;
     }
     for(z=0;z<nx;z++){
-        PHI[z] = a0*exp((-pow((R[z]-x0),2))/pow(s0,2));
+        PHI[z] = a0*exp((-pow((X[z]-x0),2))/pow(s0,2));
         PI[z]=0.0;
     }
     for(z=0;z<nx;z++){
-        PSI[z]=-2.*a0*((R[z]-x0)/pow(s0,2))*exp(-pow(R[z]-x0,2)/pow(s0,2));
+        PSI[z]=-2.*a0*((X[z]-x0)/pow(s0,2))*exp(-pow(X[z]-x0,2)/pow(s0,2));
     }
     /**Creamos documentos de escritura*/
     fp=fopen("salidaphi3.txt","wt");
@@ -53,17 +53,17 @@ int main()
     fp2=fopen("salidapi3.txt","wt");
     /**Se escribe el resultado en el documento correspondiente*/
     for (z=0;z<nx;z++){
-      fprintf(fp, "%f %f",R[z],PHI[z]);
+      fprintf(fp, "%f %f",X[z],PHI[z]);
       fprintf(fp,"\n");
     }
       fprintf(fp,"\n\n");
     for (z=0;z<nx;z++){
-      fprintf(fp1, "%f %f",R[z],PSI[z]);
+      fprintf(fp1, "%f %f",X[z],PSI[z]);
       fprintf(fp1,"\n");
     }
       fprintf(fp1,"\n\n");
     for (z=0;z<nx;z++){
-      fprintf(fp2, "%f %f",R[z],PI[z]);
+      fprintf(fp2, "%f %f",X[z],PI[z]);
       fprintf(fp2,"\n");
     }
       fprintf(fp2,"\n\n");
@@ -80,6 +80,7 @@ int main()
 	OPI[n]=PI[n];
       }
 
+
       /**Calculando puntos nuevos para un tiempo t*/ 
 
       //ICN de tres pasos
@@ -87,16 +88,16 @@ int main()
       //Primero
       for(n=1;n<nx-1;n++){
 	/*Primero calculamos las derivadas*/
-	DPSI[n]=(8*PSI[n+1]+PSI[n-2]-PSI[n+2]-8*PSI[n-1])/(12.*dx);
-	DPI[n]=(8*PI[n+1]+PI[n-2]-PI[n+2]-8*PI[n-1])/(12.*dx);
+	DPSI[n]=(PSI[n+1]-PSI[n-1])/(2.*dx);
+	DPI[n]=(PI[n+1]-PI[n-1])/(2.*dx);
       }
-
+      
       for(n=1;n<nx-1;n++){
 	/**Evaluamos las fuentes*/
 	SPHI[n]=PI[n];
 	SPSI[n]=DPI[n];
-	SPI[n]=(pow(v,2))*DPSI[n];
-        /*SPI[n]=(pow(v,2))*(DPSI[n]+(2/R[n])*PSI[n]);*/
+        /*SPI[n]=(pow(v,2))*(DPSI[n]);*/
+	SPI[n]=(pow(v,2))*(DPSI[n] +(2/X[n])*PSI[n]);
 
 	//Primer paso (medio intervalo)
 	PHI[n]=OPHI[n]+0.5*dt*SPHI[n];
@@ -105,18 +106,18 @@ int main()
       }
 
       /**frontera derecha*/
-      SPI[nx-1]=-v/dx*(PI[nx-1]-PI[nx-2]);//0.;
-      SPHI[nx-1]=-v/dx*(PHI[nx-1]-PHI[nx-2]);
-      SPSI[nx-1]=-v/dx*(PSI[nx-1]-PSI[nx-2]);
+      SPI[nx-1]=-v/(2*dx)*(3*PI[nx-1]-4*PI[nx-2]+PI[nx-3])+PHI[nx-1]/X[nx-1];
+      SPHI[nx-1]=-v/(2*dx)*(3*PHI[nx-1]-4*PHI[nx-2]+PHI[nx-3]);
+      SPSI[nx-1]=-v/(2*dx)*(3*PSI[nx-1]-4*PSI[nx-2]+PSI[nx-3])+PHI[nx-1]/X[nx-1];
 
       PHI[nx-1]=OPHI[nx-1]+0.5*dt*SPHI[nx-1];
       PSI[nx-1]=OPSI[nx-1]+0.5*dt*SPSI[nx-1];
       PI[nx-1]=OPI[nx-1]+0.5*dt*SPI[nx-1];
 
       /**Frontera izquierda*/
-      SPI[0]=v/dx*(PI[1]-PI[0]);//0.;
-      SPHI[0]=v/dx*(PHI[1]-PHI[0]);
-      SPSI[0]=v/dx*(PSI[1]-PSI[0]);
+      SPI[0]=v/(2*dx)*(4*PI[1]-PI[2]-3*PI[0])+PHI[0]/X[0];//0.;
+      SPHI[0]=v/(2*dx)*(4*PHI[1]-PHI[2]-3*PHI[0]);
+      SPSI[0]=v/(2*dx)*(4*PSI[1]-PSI[2]-3*PSI[0])+PHI[0]/X[0];
 
       PHI[0]=OPHI[0]+0.5*dt*SPHI[0];
       PSI[0]=OPSI[0]+0.5*dt*SPSI[0];
@@ -126,16 +127,17 @@ int main()
 
       for(n=1;n<nx-1;n++){
 	/*Primero calculamos las derivadas*/
-	DPSI[n]=(8*PSI[n+1]+PSI[n-2]-PSI[n+2]-8*PSI[n-1])/(12.*dx);
-	DPI[n]=(8*PI[n+1]+PI[n-2]-PI[n+2]-8*PI[n-1])/(12.*dx);
+	DPSI[n]=(PSI[n+1]-PSI[n-1])/(2.*dx);
+	DPI[n]=(PI[n+1]-PI[n-1])/(2.*dx);
       }
 
       for(n=1;n<nx-1;n++){
 	/**Evaluamos las fuentes*/
 	SPHI[n]=PI[n];
 	SPSI[n]=DPI[n];
-        SPI[n]=(pow(v,2))*DPSI[n];
-        /*SPI[n]=(pow(v,2))*(DPSI[n]+(2/R[n])*PSI[n]);*/
+	/*SPI[n]=(pow(v,2))*DPSI[n];*/
+	SPI[n]=(pow(v,2))*(DPSI[n] +(2/X[n])*PSI[n]);
+
 	//Agrego pasos intermedios para hacerlo estable
 	// y aumentar el orden
 
@@ -146,35 +148,37 @@ int main()
       }
 
         /**frontera derecha*/
-      SPI[nx-1]=-v/dx*(PI[nx-1]-PI[nx-2]);//0.;
-      SPHI[nx-1]=-v/dx*(PHI[nx-1]-PHI[nx-2]);
-      SPSI[nx-1]=-v/dx*(PSI[nx-1]-PSI[nx-2]);
+      SPI[nx-1]=-v/(2*dx)*(3*PI[nx-1]-4*PI[nx-2]+PI[nx-3])+PHI[nx-1]/X[nx-1];//0.;
+      SPHI[nx-1]=-v/(2*dx)*(3*PHI[nx-1]-4*PHI[nx-2]+PHI[nx-3]);
+      SPSI[nx-1]=-v/(2*dx)*(3*PSI[nx-1]-4*PSI[nx-2]+PSI[nx-3])+PHI[nx-1]/X[nx-1];
 
       PHI[nx-1]=OPHI[nx-1]+0.5*dt*SPHI[nx-1];
       PSI[nx-1]=OPSI[nx-1]+0.5*dt*SPSI[nx-1];
       PI[nx-1]=OPI[nx-1]+0.5*dt*SPI[nx-1];
 
       /**Frontera izquierda*/
-      SPI[0]=v/dx*(PI[1]-PI[0]);//0.;
-      SPHI[0]=v/dx*(PHI[1]-PHI[0]);
-      SPSI[0]=v/dx*(PSI[1]-PSI[0]);
+      SPI[0]=v/(2*dx)*(4*PI[1]-PI[2]-3*PI[0])+PHI[0]/X[0];//0.;
+      SPHI[0]=v/(2*dx)*(4*PHI[1]-PHI[2]-3*PHI[0]);
+      SPSI[0]=v/(2*dx)*(4*PSI[1]-PSI[2]-3*PSI[0])+PHI[0]/X[0];
 
       PHI[0]=OPHI[0]+0.5*dt*SPHI[0];
       PSI[0]=OPSI[0]+0.5*dt*SPSI[0];
       PI[0]=OPI[0]+0.5*dt*SPI[0];
 
-      for(n=1;n<nx-1;n++){
+
+
+      for(n=0;n<nx-1;n++){
 	/*Primero calculamos las derivadas*/
-	DPSI[n]=(8*PSI[n+1]+PSI[n-2]-PSI[n+2]-8*PSI[n-1])/(12.*dx);
-	DPI[n]=(8*PI[n+1]+PI[n-2]-PI[n+2]-8*PI[n-1])/(12.*dx);
+	DPSI[n]=(PSI[n+1]-PSI[n-1])/(2.*dx);
+	DPI[n]=(PI[n+1]-PI[n-1])/(2.*dx);
       }
 
       for(n=1;n<nx-1;n++){
 	/**Evaluamos las fuentes*/
 	SPHI[n]=PI[n];
 	SPSI[n]=DPI[n];
-	SPI[n]=(pow(v,2))*DPSI[n];
-        /*SPI[n]=(pow(v,2))*(DPSI[n]+(2/R[n])*PSI[n]);*/
+	/*SPI[n]=(pow(v,2))*DPSI[n];*/
+	SPI[n]=(pow(v,2))*(DPSI[n] +(2/X[n])*PSI[n]);
 
 	//Agrego pasos intermedios para hacerlo estable
 	// y aumentar el orden
@@ -186,35 +190,36 @@ int main()
       }
 
         /**frontera derecha*/
-      SPI[nx-1]=-v/dx*(PI[nx-1]-PI[nx-2]);//0.;
-      SPHI[nx-1]=-v/dx*(PHI[nx-1]-PHI[nx-2]);
-      SPSI[nx-1]=-v/dx*(PSI[nx-1]-PSI[nx-2]);
+      SPI[nx-1]=-v/(2*dx)*(3*PI[nx-1]-4*PI[nx-2]+PI[nx-3])+PHI[nx-1]/X[nx-1];//0.;
+      SPHI[nx-1]=-v/(2*dx)*(3*PHI[nx-1]-4*PHI[nx-2]+PHI[nx-3]);
+      SPSI[nx-1]=-v/(2*dx)*(3*PSI[nx-1]-4*PSI[nx-2]+PSI[nx-3])+PHI[nx-1]/X[nx-1];
 
       PHI[nx-1]=OPHI[nx-1]+dt*SPHI[nx-1];
       PSI[nx-1]=OPSI[nx-1]+dt*SPSI[nx-1];
       PI[nx-1]=OPI[nx-1]+dt*SPI[nx-1];
 
         /**Frontera izquierda*/
-      SPI[0]=v/dx*(PI[1]-PI[0]);//0.;
-      SPHI[0]=v/dx*(PHI[1]-PHI[0]);
-      SPSI[0]=v/dx*(PSI[1]-PSI[0]);
+      SPI[0]=v/(2*dx)*(4*PI[1]-PI[2]-3*PI[0])+PHI[0]/X[0];//0.;
+      SPHI[0]=v/(2*dx)*(4*PHI[1]-PHI[2]-3*PHI[0]);
+      SPSI[0]=v/(2*dx)*(4*PSI[1]-PSI[2]-3*PSI[0])+PHI[0]/X[0];
+
       PHI[0]=OPHI[0]+dt*SPHI[0];
       PSI[0]=OPSI[0]+dt*SPSI[0];
       PI[0]=OPI[0]+dt*SPI[0];
 
     /**Se escribe el resultado en el documento correspondiente*/
     for (n=0;n<nx;n++){
-      fprintf(fp, "%f %f",R[n],PHI[n]);
+      fprintf(fp, "%f %f",X[n],PHI[n]);
       fprintf(fp,"\n");
     }
       fprintf(fp,"\n\n");
     for (n=0;n<nx;n++){
-      fprintf(fp1, "%f %f",R[n],PSI[n]);
+      fprintf(fp1, "%f %f",X[n],PSI[n]);
       fprintf(fp1,"\n");
     }
       fprintf(fp1,"\n\n");
     for (n=0;n<nx;n++){
-      fprintf(fp2, "%f %f",R[n],PI[n]);
+      fprintf(fp2, "%f %f",X[n],PI[n]);
       fprintf(fp2,"\n");
     }
       fprintf(fp2,"\n\n");

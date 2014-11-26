@@ -38,14 +38,32 @@ int main()
     t=0;
 /**Fijamos valores iniciales*/
     for(z=0;z<nx;z++){
-        X[z]=(z+0.5)*dx;
+        if(z!=0){
+            X[z]=z*dx;
+        }
+        else{
+            X[z]=(-1)*dx;
+        }  
     }
+
     for(z=0;z<nx;z++){
-        PHI[z] = a0*exp((-pow((X[z]-x0),2))/pow(s0,2));
-        PI[z]=0.0;
+        if(z!=0){
+            PHI[z]=a0*exp((-pow((X[z]-x0),2))/pow(s0,2));
+        }
+        else{
+            PHI[z]=-a0*exp((-pow((X[1]-x0),2))/pow(s0,2));
+        }
     }
+
     for(z=0;z<nx;z++){
+        if(z!=0){
         PSI[z]=-2.*a0*((X[z]-x0)/pow(s0,2))*exp(-pow(X[z]-x0,2)/pow(s0,2));
+        PI[z]=0.0;
+        }
+        else{
+            PSI[z]=-2.*a0*((X[1]-x0)/pow(s0,2))*exp(-pow(X[z]-x0,2)/pow(s0,2));
+            PI[z]=0.0;
+        }
     }
     /**Creamos documentos de escritura*/
     fp=fopen("salidaphi3.txt","wt");
@@ -97,7 +115,7 @@ int main()
 	SPHI[n]=PI[n];
 	SPSI[n]=DPI[n];
         /*SPI[n]=(pow(v,2))*(DPSI[n]);*/
-	SPI[n]=(pow(v,2))*(DPSI[n] +(2/X[n])*PSI[n]);
+	SPI[n]=(pow(v,2))*(DPSI[n]+(2./X[n])*PSI[n]);
 
 	//Primer paso (medio intervalo)
 	PHI[n]=OPHI[n]+0.5*dt*SPHI[n];
@@ -106,18 +124,18 @@ int main()
       }
 
       /**frontera derecha*/
-      SPI[nx-1]=-v/(2*dx)*(3*PI[nx-1]-4*PI[nx-2]+PI[nx-3])+PHI[nx-1]/X[nx-1];
-      SPHI[nx-1]=-v/(2*dx)*(3*PHI[nx-1]-4*PHI[nx-2]+PHI[nx-3]);
-      SPSI[nx-1]=-v/(2*dx)*(3*PSI[nx-1]-4*PSI[nx-2]+PSI[nx-3])+PHI[nx-1]/X[nx-1];
+      SPI[nx-1]=-(v/(2.*dx))*(3*PI[nx-1]-4*PI[nx-2]+PI[nx-3])+v*PI[nx-1]/X[nx-1];
+      SPHI[nx-1]=-(v/(2.*dx))*(3*PHI[nx-1]-4*PHI[nx-2]+PHI[nx-3])+v*PHI[nx-1]/X[nx-1];
+      SPSI[nx-1]=-(v/(2.*dx))*(3*PSI[nx-1]-4*PSI[nx-2]+PSI[nx-3])+v*PSI[nx-1]/X[nx-1];
 
       PHI[nx-1]=OPHI[nx-1]+0.5*dt*SPHI[nx-1];
       PSI[nx-1]=OPSI[nx-1]+0.5*dt*SPSI[nx-1];
       PI[nx-1]=OPI[nx-1]+0.5*dt*SPI[nx-1];
 
-      /**Frontera izquierda*/
-      SPI[0]=v/(2*dx)*(4*PI[1]-PI[2]-3*PI[0])+PHI[0]/X[0];//0.;
-      SPHI[0]=v/(2*dx)*(4*PHI[1]-PHI[2]-3*PHI[0]);
-      SPSI[0]=v/(2*dx)*(4*PSI[1]-PSI[2]-3*PSI[0])+PHI[0]/X[0];
+      /**Frontera izquierda, los elementos PI[0],PHI[0],PSI[0] corresponden a las funciones evaluadas en -1, considerando PI(r)=PI(-r),PHI(-r)=-PHI(r),PSI(-r)=PSI(r)*/
+      SPI[0]=-(v/(2.*dx))*(PI[1]-PI[0])+v*PI[0]/X[0];
+      SPHI[0]=-(v/(2.*dx))*(PHI[1]-PHI[0])+v*PHI[0]/X[0];
+      SPSI[0]=-(v/(2.*dx))*(PSI[1]-PSI[0])+v*PSI[0]/X[0];
 
       PHI[0]=OPHI[0]+0.5*dt*SPHI[0];
       PSI[0]=OPSI[0]+0.5*dt*SPSI[0];
@@ -136,7 +154,7 @@ int main()
 	SPHI[n]=PI[n];
 	SPSI[n]=DPI[n];
 	/*SPI[n]=(pow(v,2))*DPSI[n];*/
-	SPI[n]=(pow(v,2))*(DPSI[n] +(2/X[n])*PSI[n]);
+	SPI[n]=(pow(v,2))*(DPSI[n] +(2./X[n])*PSI[n]);
 
 	//Agrego pasos intermedios para hacerlo estable
 	// y aumentar el orden
@@ -148,18 +166,18 @@ int main()
       }
 
         /**frontera derecha*/
-      SPI[nx-1]=-v/(2*dx)*(3*PI[nx-1]-4*PI[nx-2]+PI[nx-3])+PHI[nx-1]/X[nx-1];//0.;
-      SPHI[nx-1]=-v/(2*dx)*(3*PHI[nx-1]-4*PHI[nx-2]+PHI[nx-3]);
-      SPSI[nx-1]=-v/(2*dx)*(3*PSI[nx-1]-4*PSI[nx-2]+PSI[nx-3])+PHI[nx-1]/X[nx-1];
+      SPI[nx-1]=-(v/(2.*dx))*(3*PI[nx-1]-4*PI[nx-2]+PI[nx-3])+v*PI[nx-1]/X[nx-1];//0.;
+      SPHI[nx-1]=-(v/(2.*dx))*(3*PHI[nx-1]-4*PHI[nx-2]+PHI[nx-3])+v*PHI[nx-1]/X[nx-1];
+      SPSI[nx-1]=-(v/(2.*dx))*(3*PSI[nx-1]-4*PSI[nx-2]+PSI[nx-3])+v*PSI[nx-1]/X[nx-1];
 
       PHI[nx-1]=OPHI[nx-1]+0.5*dt*SPHI[nx-1];
       PSI[nx-1]=OPSI[nx-1]+0.5*dt*SPSI[nx-1];
       PI[nx-1]=OPI[nx-1]+0.5*dt*SPI[nx-1];
 
       /**Frontera izquierda*/
-      SPI[0]=v/(2*dx)*(4*PI[1]-PI[2]-3*PI[0])+PHI[0]/X[0];//0.;
-      SPHI[0]=v/(2*dx)*(4*PHI[1]-PHI[2]-3*PHI[0]);
-      SPSI[0]=v/(2*dx)*(4*PSI[1]-PSI[2]-3*PSI[0])+PHI[0]/X[0];
+      SPI[0]=-(v/(2.*dx))*(PI[1]-PI[0])+v*PI[0]/X[0];//0.;
+      SPHI[0]=-(v/(2.*dx))*(PHI[1]-PHI[0])+v*PHI[0]/X[0];
+      SPSI[0]=-(v/(2.*dx))*(PSI[1]-PSI[0])+v*PSI[0]/X[0];
 
       PHI[0]=OPHI[0]+0.5*dt*SPHI[0];
       PSI[0]=OPSI[0]+0.5*dt*SPSI[0];
@@ -178,7 +196,7 @@ int main()
 	SPHI[n]=PI[n];
 	SPSI[n]=DPI[n];
 	/*SPI[n]=(pow(v,2))*DPSI[n];*/
-	SPI[n]=(pow(v,2))*(DPSI[n] +(2/X[n])*PSI[n]);
+	SPI[n]=(pow(v,2))*(DPSI[n] +(2./X[n])*PSI[n]);
 
 	//Agrego pasos intermedios para hacerlo estable
 	// y aumentar el orden
@@ -190,18 +208,18 @@ int main()
       }
 
         /**frontera derecha*/
-      SPI[nx-1]=-v/(2*dx)*(3*PI[nx-1]-4*PI[nx-2]+PI[nx-3])+PHI[nx-1]/X[nx-1];//0.;
-      SPHI[nx-1]=-v/(2*dx)*(3*PHI[nx-1]-4*PHI[nx-2]+PHI[nx-3]);
-      SPSI[nx-1]=-v/(2*dx)*(3*PSI[nx-1]-4*PSI[nx-2]+PSI[nx-3])+PHI[nx-1]/X[nx-1];
+      SPI[nx-1]=-(v/(2.*dx))*(3*PI[nx-1]-4*PI[nx-2]+PI[nx-3])+v*PI[nx-1]/X[nx-1];
+      SPHI[nx-1]=-(v/(2.*dx))*(3*PHI[nx-1]-4*PHI[nx-2]+PHI[nx-3])+v*PHI[nx-1]/X[nx-1];
+      SPSI[nx-1]=-(v/(2.*dx))*(3*PSI[nx-1]-4*PSI[nx-2]+PSI[nx-3])+v*PSI[nx-1]/X[nx-1];
 
       PHI[nx-1]=OPHI[nx-1]+dt*SPHI[nx-1];
       PSI[nx-1]=OPSI[nx-1]+dt*SPSI[nx-1];
       PI[nx-1]=OPI[nx-1]+dt*SPI[nx-1];
 
         /**Frontera izquierda*/
-      SPI[0]=v/(2*dx)*(4*PI[1]-PI[2]-3*PI[0])+PHI[0]/X[0];//0.;
-      SPHI[0]=v/(2*dx)*(4*PHI[1]-PHI[2]-3*PHI[0]);
-      SPSI[0]=v/(2*dx)*(4*PSI[1]-PSI[2]-3*PSI[0])+PHI[0]/X[0];
+      SPI[0]=-(v/(2.*dx))*(PI[1]-PI[0])+v*PI[0]/X[0];//0.;
+      SPHI[0]=-(v/(2.*dx))*(PHI[1]-PHI[0])+v*PHI[0]/X[0];
+      SPSI[0]=-(v/(2.*dx))*(PSI[1]-PSI[0])+v*PSI[0]/X[0];
 
       PHI[0]=OPHI[0]+dt*SPHI[0];
       PSI[0]=OPSI[0]+dt*SPSI[0];
